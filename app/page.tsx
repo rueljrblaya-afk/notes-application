@@ -1,167 +1,134 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
-import NoteItem from "./components/NoteItem";
-
-type Note = {
-  id: number;
-  title: string;
-  description: string;
-};
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const router = useRouter();
 
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const [loaded, setLoaded] = useState(false);
+  function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
 
-  useEffect(() => {
-    const savedNotes = localStorage.getItem("notes");
-
-    if (savedNotes) {
-      setNotes(JSON.parse(savedNotes));
-    }
-
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (loaded) {
-      localStorage.setItem("notes", JSON.stringify(notes));
-    }
-  }, [notes, loaded]);
-
-  const addNote = () => {
-    if (!title.trim() || !description.trim()) {
-      alert("Please fill in both fields.");
+    if (!email.trim()) {
+      setError("Email is required.");
       return;
     }
 
-    const newNote: Note = {
-      id: Date.now(),
-      title: title.trim(),
-      description: description.trim(),
-    };
-
-    setNotes([...notes, newNote]);
-
-    setTitle("");
-    setDescription("");
-  };
-
-  const editNote = (note: Note) => {
-    setEditingId(note.id);
-    setEditTitle(note.title);
-    setEditDescription(note.description);
-  };
-
-  const saveEdit = () => {
-    if (!editTitle.trim() || !editDescription.trim()) {
-      alert("Please fill in both fields.");
+    if (!email.trim().endsWith("@gmail.com")) {
+      setError("Email must end with @gmail.com.");
       return;
     }
 
-    setNotes(
-      notes.map((note) =>
-        note.id === editingId
-          ? {
-              ...note,
-              title: editTitle.trim(),
-              description: editDescription.trim(),
-            }
-          : note
-      )
-    );
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
 
-    setEditingId(null);
-    setEditTitle("");
-    setEditDescription("");
+    if (password.length <= 6) {
+      setError("Password must be more than 6 characters.");
+      return;
+    }
+
+    router.push("/home");
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "12px",
+    marginTop: "8px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+    fontSize: "16px",
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditTitle("");
-    setEditDescription("");
-  };
-
-  const deleteNote = (id: number) => {
-    setNotes(notes.filter((note) => note.id !== id));
+  const buttonStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "12px",
+    marginTop: "20px",
+    background: "#4f46e5",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "16px",
+    cursor: "pointer",
   };
 
   return (
-    <main className="container">
-      <h1>My Notes</h1>
-      <p className="subtitle">Simple Next.js Notes Application</p>
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#eef2ff",
+        fontFamily: "Arial, sans-serif",
+        padding: "20px",
+      }}
+    >
+      <section
+        style={{
+          background: "white",
+          padding: "32px",
+          borderRadius: "16px",
+          width: "100%",
+          maxWidth: "400px",
+          boxShadow: "0 8px 25px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h1 style={{ textAlign: "center", color: "#312e81" }}>
+          Login
+        </h1>
 
-      <section className="note-form">
-        <h2>Add New Note</h2>
+        <p style={{ textAlign: "center", color: "#64748b" }}>
+          Welcome! Please log in to continue.
+        </p>
 
-        <input
-          type="text"
-          placeholder="Note title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+        <form onSubmit={handleLogin}>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="text"
+            placeholder="Enter your Gmail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={inputStyle}
+          />
 
-        <textarea
-          placeholder="Write your note description..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
+          <label
+            htmlFor="password"
+            style={{ display: "block", marginTop: "18px" }}
+          >
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={inputStyle}
+          />
 
-        <button onClick={addNote}>Add Note</button>
-      </section>
+          <button type="submit" style={buttonStyle}>
+            Login
+          </button>
 
-      <section className="notes-section">
-        <div className="notes-header">
-          <h2>My Notes</h2>
-          <span>{notes.length} note(s)</span>
-        </div>
-
-        {notes.length === 0 ? (
-          <div className="empty">
-            <h3>No notes yet</h3>
-            <p>Add your first note above.</p>
-          </div>
-        ) : (
-          <div className="notes-list">
-            {notes.map((note) =>
-              editingId === note.id ? (
-                <div className="edit-form" key={note.id}>
-                  <h3>Edit Note</h3>
-
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                  />
-
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                  />
-
-                  <div className="edit-buttons">
-                    <button onClick={saveEdit}>Save</button>
-                    <button onClick={cancelEdit}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <NoteItem
-                  key={note.id}
-                  note={note}
-                  onEdit={editNote}
-                  onDelete={deleteNote}
-                />
-              )
-            )}
-          </div>
-        )}
+          {error && (
+            <p
+              role="alert"
+              style={{ color: "#dc2626", marginTop: "15px" }}
+            >
+              {error}
+            </p>
+          )}
+        </form>
       </section>
     </main>
   );
